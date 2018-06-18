@@ -20,6 +20,7 @@ namespace Trl{
 class Logger{
 private:
 	std::string fileName;
+	std::string date;
 	std::ostringstream stack;
 public:
 	Logger(){
@@ -36,18 +37,35 @@ public:
 	
 	#ifdef __linux__
 		std::tm *pnow = std::localtime(&result);
-		timeName << pnow->tm_year + 1900 << pnow->tm_mon + 1 << pnow->tm_mday
-			<< pnow->tm_hour << pnow->tm_min << pnow->tm_sec;
+		timeName << pnow->tm_year + 1900 << "_" << pnow->tm_mon + 1 << pnow->tm_mday
+			<< "_" << pnow->tm_hour << pnow->tm_min << pnow->tm_sec;
 	#elif _WIN32
 		std::tm pnow;
 		localtime_s(&pnow,&result);
-		timeName << pnow.tm_year + 1900 << pnow.tm_mon + 1 << pnow.tm_mday
-			<< pnow.tm_hour << pnow.tm_min << pnow.tm_sec;
+		timeName << pnow.tm_year + 1900 << "_" << pnow.tm_mon + 1 << pnow.tm_mday
+			<< "_" << pnow.tm_hour << pnow.tm_min << pnow.tm_sec;
 	#else
 		std::tm *pnow = std::localtime(&result);
 	#endif
-		
+
+		return std::string(timeName.str());
+	}
+
+	std::string DateStamp(void){
+		std::time_t result = std::time(nullptr);
+		std::ostringstream timeName;
 	
+	#ifdef __linux__
+		std::tm *pnow = std::localtime(&result);
+		timeName << pnow->tm_year + 1900 << "_" << pnow->tm_mon + 1 << pnow->tm_mday;
+	#elif _WIN32
+		std::tm pnow;
+		localtime_s(&pnow,&result);
+		timeName << pnow.tm_year + 1900 << "_" << pnow.tm_mon + 1 << pnow.tm_mday;
+	#else
+		std::tm *pnow = std::localtime(&result);
+	#endif
+
 		return std::string(timeName.str());
 	}
 
@@ -65,10 +83,21 @@ public:
 				mkdir(file.c_str(),0775);
 				return;
 		}
+		
+		std::string dateFile = "./log/" + DateStamp();
+
+		if(stat(dateFile.c_str(), &st) != 0){
+				mkdir(dateFile.c_str(),0775);
+				return;
+		}
 
 		std::string path;
+
+		std::string bufFile = dateFile + "/"  + TimeStamp();
+
+		mkdir(bufFile.c_str(),0775);
 		
-		path = "./log/" + TimeStamp() + "_" + fileName + ".txt";
+		path = bufFile + "/" + fileName + ".txt";
 
 		std::ofstream ofs(path,std::ios::out);
 		ofs << stack.str() << std::endl;
